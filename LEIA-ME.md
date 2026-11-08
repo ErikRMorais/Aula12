@@ -14,6 +14,7 @@ Os eventos servem para construir o fluxo antes de o túnel estar no ar: cole o c
 **Evento do Instagram** como dado fixado (*Pin data*) e troque o `media.id` pelo id do seu post.
 Desafixe os dados antes de publicar o workflow.
 
-Nenhum arquivo daqui contém token. O token de verificação do webhook (seção 3.1) aparece no nó
-**Token confere?** do workflow `verificacao-webhook.json`; por isso esse arquivo não deve ir para
-repositório aberto.
+Nenhum arquivo daqui contém token nem segredo. No `verificacao-webhook.json`, o token de
+verificação do webhook (seção 3.1) foi trocado por `COLE-AQUI-O-TOKEN-DE-VERIFICACAO` no nó
+**Token confere?**: ao importar o workflow, escreva ali o token que você registrou na Meta.
+As credenciais `Instagram TEP` e `Groq` não vão nas exportações; crie-as no n8n e escolha-as nos nós.

@@ -1,0 +1,137 @@
+{
+  "name": "Aula 12 - Verificação do webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "instagram",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "95d00694-acce-411a-b6f3-3696f1a62ef1",
+      "name": "Desafio da Meta",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -448,
+        112
+      ],
+      "webhookId": "336b43ce-52b3-459b-b2a4-a7b21cc4a6d3"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "54dd432b-32c4-4cde-b0ed-af19f3df3b53",
+              "leftValue": "={{ $json.query['hub.mode'] }}",
+              "rightValue": "subscribe",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "f3f271aa-d70b-4f53-a998-c93cb19a5f6d",
+              "leftValue": "={{ $json.query['hub.verify_token'] }}",
+              "rightValue": "COLE-AQUI-O-TOKEN-DE-VERIFICACAO",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "be6e2721-add9-4894-bb0d-a31c6922d0cc",
+      "name": "Token confere?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -224,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.query['hub.challenge'] }}",
+        "options": {}
+      },
+      "id": "992369e6-952c-49c4-90a6-e394f43dea9b",
+      "name": "Devolver o desafio",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "Token de verificação inválido",
+        "options": {
+          "responseCode": 403
+        }
+      },
+      "id": "f187514e-6978-438b-8ce5-135dd7b0e64a",
+      "name": "Recusar",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        208
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Desafio da Meta": {
+      "main": [
+        [
+          {
+            "node": "Token confere?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token confere?": {
+      "main": [
+        [
+          {
+            "node": "Devolver o desafio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Recusar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "99e1b03d-7a89-41d8-8e79-1e63f7df491c",
+  "nodeGroups": [],
+  "id": "7PEDxtoJAkpRaqUr",
+  "tags": []
+}

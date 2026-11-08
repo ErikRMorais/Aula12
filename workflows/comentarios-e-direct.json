@@ -1,0 +1,313 @@
+{
+  "name": "Aula 12 - Comentários e Direct",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "instagram",
+        "options": {}
+      },
+      "id": "d752fe69-a0f8-4d69-8c3f-3e851442fd81",
+      "name": "Evento do Instagram",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -688,
+        112
+      ],
+      "webhookId": "d3d83420-d60e-43a4-8bb7-8c350d32541a"
+    },
+    {
+      "parameters": {
+        "jsCode": "// A Meta envia um POST com object, entry[] e, dentro de cada entry,\n// changes[] (comentários) ou messaging[] (mensagens do Direct).\n// Este nó devolve um item por evento, com o campo \"tipo\" para o Switch.\nconst saida = [];\nfor (const item of $input.all()) {\n  const corpo = item.json.body ?? {};\n  for (const entrada of corpo.entry ?? []) {\n    for (const mudanca of entrada.changes ?? []) {\n      if (mudanca.field !== 'comments') continue;\n      const v = mudanca.value ?? {};\n      saida.push({ json: {\n        tipo: 'comentario',\n        comentario_id: v.id,\n        texto: v.text ?? '',\n        de_id: v.from?.id,\n        de_usuario: v.from?.username,\n        midia_id: v.media?.id,\n        midia_tipo: v.media?.media_product_type,\n        pai_id: v.parent_id ?? null,\n      }});\n    }\n    for (const m of entrada.messaging ?? []) {\n      if (!m.message || !m.message.text || m.message.is_echo) continue;\n      saida.push({ json: {\n        tipo: 'mensagem',\n        remetente: m.sender?.id,\n        destinatario: m.recipient?.id,\n        texto: m.message.text,\n        mensagem_id: m.message.mid,\n      }});\n    }\n  }\n}\nreturn saida;"
+      },
+      "id": "65a5324e-6331-4c75-b9cc-d7d8e18e293b",
+      "name": "Separar eventos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "f2a7b2ab-6d5f-4ba4-9360-36ebf150877d",
+                    "leftValue": "={{ $json.tipo }}",
+                    "rightValue": "comentario",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "comentario"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e1148f74-ee5f-48b0-a6ac-93fd5efb3d51",
+                    "leftValue": "={{ $json.tipo }}",
+                    "rightValue": "mensagem",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "mensagem"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "55dc0ab0-8743-4056-83b9-738fcc3fbd3c",
+      "name": "Tipo de evento",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -240,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "92c26217-935a-4a6b-a433-ed2c46965137",
+              "leftValue": "={{ $json.midia_id }}",
+              "rightValue": "17911913025589742",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "f2c8b9cd-4425-46a5-bbf4-b893230a1a71",
+              "leftValue": "={{ $json.de_id }}",
+              "rightValue": "17841423477664471",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "de0f16a2-83a0-493f-a12c-9f9833f47dc8",
+      "name": "Do post e de outra pessoa",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Tabela de palavras-chave do post. A primeira regra que casar define a\n// resposta.\n// Toda resposta termina identificando que foi automática.\nconst regras = [\n  { palavras: ['meme', 'engraçado', 'engracado', 'kkk', 'haha', 'rindo'],\n    resposta: 'Que bom que você curtiu! 😄' },\n  { palavras: ['programador', 'programação', 'programacao', 'código', 'codigo', 'bug'],\n    resposta: 'Vida de programador é isso mesmo! Qual linguagem você mais usa?' },\n  { palavras: ['n8n', 'workflow', 'automação', 'automacao', 'robô', 'robo'],\n    resposta: 'Esta resposta foi enviada por um workflow do n8n, numa conta de teste de automação.' },\n  { palavras: ['parabéns', 'parabens', 'obrigado', 'obrigada', 'valeu', 'show'],\n    resposta: 'Obrigado! 🙌' },\n];\nconst normalizar = (t) => t.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');\nconst saida = [];\nfor (const item of $input.all()) {\n  const texto = normalizar(item.json.texto ?? '');\n  const regra = regras.find(r => r.palavras.some(p => texto.includes(normalizar(p))));\n  if (!regra) continue;                       // sem palavra-chave: não responde\n  saida.push({ json: { ...item.json, palavra: regra.palavras[0],\n    resposta: `${regra.resposta} (resposta automática)` } });\n}\nreturn saida;"
+      },
+      "id": "bd180428-db7b-4fea-8a82-b9f54a2ce438",
+      "name": "Palavra-chave",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.instagram.com/{{ $json.comentario_id }}/replies",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "message",
+              "value": "={{ $json.resposta }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6bfdd39b-e361-4237-934a-525d599169a8",
+      "name": "Responder comentário",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "plUtSwPe2TeWHyCK",
+          "name": "Instagram TEP"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "yeArnm9EynPXwT9L",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/yeArnm9EynPXwT9L",
+          "cachedResultName": "Aula 12 - Direct com agente"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "remetente": "={{ $json.remetente }}",
+            "texto": "={{ $json.texto }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "remetente",
+              "displayName": "remetente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "texto",
+              "displayName": "texto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        -16,
+        208
+      ],
+      "id": "4bbe6917-000e-47ed-acc3-4855ed98d001",
+      "name": "Direct com agente"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Evento do Instagram": {
+      "main": [
+        [
+          {
+            "node": "Separar eventos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar eventos": {
+      "main": [
+        [
+          {
+            "node": "Tipo de evento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tipo de evento": {
+      "main": [
+        [
+          {
+            "node": "Do post e de outra pessoa",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Direct com agente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Do post e de outra pessoa": {
+      "main": [
+        [
+          {
+            "node": "Palavra-chave",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Palavra-chave": {
+      "main": [
+        [
+          {
+            "node": "Responder comentário",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "0d0ecf49-c60c-4d29-8d2a-fdb37532b677",
+  "nodeGroups": [],
+  "id": "ky5BjVe7U9H3ovW1",
+  "tags": []
+}
