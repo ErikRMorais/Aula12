@@ -9,6 +9,7 @@ Pasta de trabalho do volume (`aula12`), versionada com git. O n8n, o app da Meta
 | `eventos/mensagem.json` | 2.2, 6.1 | Evento de mensagem do Direct, no mesmo formato |
 | `.gitignore` | 1.1 | Exclui `.env`, `.venv/` e `__pycache__/` do controle de versão |
 | `workflows/` | Prática | Recebe os workflows exportados do n8n (passo 5 do roteiro) |
+| `evidencias/` | Resultado esperado | Prints do Instagram: comentário respondido e conversa de Direct com memória |
 
 Os eventos servem para construir o fluxo antes de o túnel estar no ar: cole o conteúdo no nó
 **Evento do Instagram** como dado fixado (*Pin data*) e troque o `media.id` pelo id do seu post.
